@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>DB Worker Manager</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; }
+        .error { color: red; font-weight: bold; padding: 10px; border: 1px solid red; background: #ffe6e6; }
+        .success { color: green; font-weight: bold; padding: 10px; border: 1px solid green; background: #e6ffe6; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .user-info { float: right; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="user-info">
+    Ви увійшли як: <b><span sec:authentication="name"></span></b>
+    <span sec:authorize="hasRole('ADMIN')">(Адміністратор)</span>
+    <span sec:authorize="hasRole('USER')">(Користувач)</span>
+
+    <form th:action="@{/logout}" method="post" style="display:inline;">
+        <button type="submit">Вийти</button>
+    </form>
+</div>
+
+<h1>Управління таблицею Worker</h1>
+
+<div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+    <strong>Приклади команд:</strong><br>
+    <em>Перегляд:</em> <code>SELECT * FROM worker</code><br>
+
+    <div sec:authorize="hasRole('ADMIN')" style="margin-top: 5px; color: darkred;">
+        <em>Додавання:</em> <code>insert worker (name='Ivan', profession='Driver', zhred='Kyiv-2')</code><br>
+        <em>Видалення:</em> <code>delete worker (id='1')</code>
+    </div>
+
+    <div sec:authorize="!hasRole('ADMIN')" style="margin-top: 5px; color: gray;">
+        <em>Зміна даних доступна тільки адміністратору.</em>
+    </div>
+</div>
+
+<form action="/execute" method="post">
+    <input type="hidden"
+           th:if="${_csrf}"
+           th:name="${_csrf.parameterName}"
+           th:value="${_csrf.token}" />
+
+    <label for="command">Введіть SQL-запит:</label><br>
+    <textarea id="command" name="command" rows="4" style="width: 100%; margin-top: 5px;"></textarea><br><br>
+    <button type="submit" style="padding: 10px 20px; cursor: pointer;">Виконати</button>
+</form>
+
+<hr>
+
+<div th:if="${error}" class="error">
+    <p th:text="${error}"></p>
+</div>
+
+<div th:if="${message}" class="success">
+    <p th:text="${message}"></p>
+</div>
+
+<div th:if="${result} and ${!result.empty}">
+    <h3>Результат запиту:</h3>
+    <table>
+        <thead>
+        <tr th:each="row, rowStat : ${result}" th:if="${rowStat.index == 0}">
+            <th th:each="entry : ${row}" th:text="${entry.key}">Column</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="row : ${result}">
+            <td th:each="entry : ${row}" th:text="${entry.value}">Value</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
